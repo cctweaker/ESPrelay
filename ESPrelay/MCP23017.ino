@@ -1,0 +1,136 @@
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+
+void check_MCP()
+{
+    Wire.beginTransmission(MCP_ADDR);
+
+    if (Wire.endTransmission() == 0)
+    {
+        // MCP found!
+        MCP = true;
+        return;
+    }
+
+    MCP = false;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+
+void setup_MCP()
+{
+    // set all to high, relay board seems to activate on low signals
+    Wire.beginTransmission(MCP_ADDR);
+    Wire.write(GPIOA); // GPIOA
+    Wire.write(0xFF);  // GPIOA
+    Wire.write(0xFF);  // GPIOB
+    Wire.write(0xFF);  // OLATA
+    Wire.write(0xFF);  // OLATB
+    Wire.endTransmission();
+
+    // set all outputs
+    Wire.beginTransmission(MCP_ADDR);
+    Wire.write(0x00); // IODIRA address
+    Wire.write(0);    // IODIRA
+    Wire.write(0);    // IODIRB
+    Wire.endTransmission();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+
+void update_pins(uint8_t pin, uint8_t value)
+{
+    if (pin == 0 || pin > 16)
+        return;
+
+    uint8_t pos = 0;
+
+    switch (pin)
+    {
+    case 1:
+        pos = 8;
+        break;
+    case 2:
+        pos = 7;
+        break;
+    case 3:
+        pos = 9;
+        break;
+    case 4:
+        pos = 6;
+        break;
+    case 5:
+        pos = 10;
+        break;
+    case 6:
+        pos = 5;
+        break;
+    case 7:
+        pos = 11;
+        break;
+    case 8:
+        pos = 4;
+        break;
+    case 9:
+        pos = 12;
+        break;
+    case 10:
+        pos = 3;
+        break;
+    case 11:
+        pos = 13;
+        break;
+    case 12:
+        pos = 2;
+        break;
+    case 13:
+        pos = 14;
+        break;
+    case 14:
+        pos = 1;
+        break;
+    case 15:
+        pos = 15;
+        break;
+    case 16:
+        pos = 0;
+        break;
+    }
+
+    if (value < 2)
+        value != value;
+
+    if (value > 1)
+        value = !bitRead(pins, pos);
+
+    bitWrite(pins, pos, value);
+
+    update_MCP();
+
+    client.publish(MQTT_CHAN_TOPIC + String(pin), String(value), true, 0);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+
+void update_MCP()
+{
+    uint8_t portA = pins;
+    uint8_t portB = pins >> 8;
+
+    Wire.beginTransmission(MCP_ADDR);
+    Wire.write(GPIOA);
+    Wire.write(portA);
+    Wire.write(portB);
+    Wire.endTransmission();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
