@@ -1,0 +1,11 @@
+private.h
+info.txt
+mqtt_dash.json
+.cache/
+.pio/
+.pioenvs/
+.vscode/
+include/
+lib/
+test/
+firmware.map
