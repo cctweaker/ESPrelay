@@ -22,20 +22,27 @@ void check_MCP()
 
 void setup_MCP()
 {
-    // set all to high, relay board seems to activate on low signals
+    uint8_t byte = 0x00;
+
+    // set all to low
     Wire.beginTransmission(MCP_ADDR);
     Wire.write(GPIOA); // GPIOA
-    Wire.write(0xFF);  // GPIOA
-    Wire.write(0xFF);  // GPIOB
-    Wire.write(0xFF);  // OLATA
-    Wire.write(0xFF);  // OLATB
+    Wire.write(byte);  // GPIOA
+    Wire.write(byte);  // GPIOB
+    Wire.write(byte);  // OLATA
+    Wire.write(byte);  // OLATB
     Wire.endTransmission();
 
-    // set all outputs
+    if (invert_output)
+    {
+        byte = 0xFF;   // set all inputs otherwise outputs
+        pins = 0xFFFF; // initialize all pins as high (relay active low)
+    }
+
     Wire.beginTransmission(MCP_ADDR);
     Wire.write(0x00); // IODIRA address
-    Wire.write(0);    // IODIRA
-    Wire.write(0);    // IODIRB
+    Wire.write(byte); // IODIRA
+    Wire.write(byte); // IODIRB
     Wire.endTransmission();
 }
 
@@ -48,71 +55,29 @@ void update_pins(uint8_t pin, uint8_t value)
     if (pin == 0 || pin > 16)
         return;
 
-    uint8_t pos = 0;
+    uint8_t pos = relay_to_mcp[pin - 1];
 
-    switch (pin)
-    {
-    case 1:
-        pos = 8;
-        break;
-    case 2:
-        pos = 7;
-        break;
-    case 3:
-        pos = 9;
-        break;
-    case 4:
-        pos = 6;
-        break;
-    case 5:
-        pos = 10;
-        break;
-    case 6:
-        pos = 5;
-        break;
-    case 7:
-        pos = 11;
-        break;
-    case 8:
-        pos = 4;
-        break;
-    case 9:
-        pos = 12;
-        break;
-    case 10:
-        pos = 3;
-        break;
-    case 11:
-        pos = 13;
-        break;
-    case 12:
-        pos = 2;
-        break;
-    case 13:
-        pos = 14;
-        break;
-    case 14:
-        pos = 1;
-        break;
-    case 15:
-        pos = 15;
-        break;
-    case 16:
-        pos = 0;
-        break;
-    }
-
-    if (value < 2)
-        value != value;
+    uint8_t val = 0;
 
     if (value > 1)
-        value = !bitRead(pins, pos);
+        val = !bitRead(pins, pos);
 
-    bitWrite(pins, pos, value);
+    if (invert_output)
+    {
+        if (value == 0)
+            val = 1;
+    }
+    else
+    {
+        if (value == 1)
+            val = 1;
+    }
+
+    bitWrite(pins, pos, val);
 
     update_MCP();
 
-    client.publish(MQTT_CHAN_TOPIC + String(pin), String(value), true, 0);
+    client.publish(MQTT_CHAN_TOPIC + String(pin), String(invert_output ? !val : val), true, 0);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -124,13 +89,78 @@ void update_MCP()
     uint8_t portA = pins;
     uint8_t portB = pins >> 8;
 
-    Wire.beginTransmission(MCP_ADDR);
-    Wire.write(GPIOA);
-    Wire.write(portA);
-    Wire.write(portB);
-    Wire.endTransmission();
+    if (invert_output) // also change direction if inverted
+    {
+        Wire.beginTransmission(MCP_ADDR);
+        Wire.write(0x00); // IODIR
+        Wire.write(portA);
+        Wire.write(portB);
+        Wire.endTransmission();
+
+        Wire.beginTransmission(MCP_ADDR);
+        Wire.write(GPIOA); // GPIOA
+        Wire.write(0x00);  // GPIOA
+        Wire.write(0x00);  // GPIOB
+        Wire.endTransmission();
+    }
+    else
+    {
+        Wire.beginTransmission(MCP_ADDR);
+        Wire.write(GPIOA);
+        Wire.write(portA);
+        Wire.write(portB);
+        Wire.endTransmission();
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////
+
+void check_timers()
+{
+    uint8_t i = 0;
+
+    for (i = 0; i < shutters; i++) // test all shutter timeouts
+    {
+        if (shutter_timeout[i] > 0)
+        {
+            if ((unsigned long)(millis() - shutter_timeout[i]) > shutter_timing[i] * 1000)
+            {
+                client.publish(MQTT_SHUT_TOPIC + String(i + 1), String(shutter_status[i]), true, 0);
+                update_pins(shutter_chn_up[i], 0);
+                update_pins(shutter_chn_down[i], 0);
+                shutter_timeout[i] = 0;
+                shutter_status[i] = 0;
+            }
+        }
+    }
+
+    /////////////////////////
+
+    for (i = 0; i < doors; i++) // test all door timeouts
+    {
+        if (door_timeout[i] > 0)
+        {
+            if ((unsigned long)(millis() - door_timeout[i]) > door_timing[i] * 1000)
+            {
+                update_pins(door_chn[i], 0);
+                door_timeout[i] = 0;
+            }
+        }
+    }
+
+    /////////////////////////
+
+    for (i = 0; i < gates; i++) // test all gate timeouts
+    {
+        if (gate_timeout[i] > 0)
+        {
+            if ((unsigned long)(millis() - gate_timeout[i]) > gate_timing[i])
+            {
+                update_pins(gate_chn[i], 0);
+                gate_timeout[i] = 0;
+            }
+        }
+    }
+}

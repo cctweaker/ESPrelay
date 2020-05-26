@@ -1,0 +1,78 @@
+{
+    "TIP": "relays",
+    "LOC": "location",
+    "ssid": "WiFi",
+    "pass": "passw0rd",
+    "ssidb": "BackupWIFI",
+    "passb": "passw0rd",
+    "MQTT_HOST": "www.mqtt.server",
+    "MQTT_PORT": 8883,
+    "MQTT_USER": "mqtt_user",
+    "MQTT_PASS": "mqtt_passw0rd",
+    "update_url": "https://esp.3dstar.ro/",
+    "FACTOR": 1024.0,
+    "heartbeat": true,
+    "heartbeat_minutes": 10,
+    "invert_output": true,
+    "relay_to_mcp": [
+        8,
+        7,
+        9,
+        6,
+        10,
+        5,
+        11,
+        4,
+        12,
+        3,
+        13,
+        2,
+        14,
+        1,
+        15,
+        0
+    ],
+    "shutters": 5,
+    "shutter_chn_up": [
+        1,
+        3,
+        5,
+        7,
+        9
+    ],
+    "shutter_chn_down": [
+        2,
+        4,
+        6,
+        8,
+        10
+    ],
+    "shutter_timing": [
+        30,
+        30,
+        30,
+        30,
+        30
+    ],
+    "doors": 1,
+    "door_chn": [
+        15
+    ],
+    "door_timing": [
+        10
+    ],
+    "gates": 1,
+    "gate_chn": [
+        16
+    ],
+    "gate_timing": [
+        400
+    ],
+    "simple": 4,
+    "simple_chn": [
+        11,
+        12,
+        13,
+        14
+    ]
+}
