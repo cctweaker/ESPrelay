@@ -96,7 +96,7 @@ void load_config()
 
     if (doc.containsKey("simple"))
         simple = doc["simple"];
-    for (i = 0; i < simples; i++)
+    for (i = 0; i < simple; i++)
         if (doc.containsKey("simple_chn"))
             simple_chn[i] = doc["simple_chn"][i];
 
