@@ -192,7 +192,7 @@ void messageReceived(String &topic, String &payload)
             if (value == 2)
             {
                 shutter_status[id] = 2;
-                update_pins(shutter_chn_down[id], 1);
+                update_pins(shutter_chn_down[id], 2, true);
                 shutter_timeout[id] = millis();
             }
         }

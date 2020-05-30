@@ -12,8 +12,8 @@ ADC_MODE(ADC_VCC);
 ///////////////////////////////////////////////////////////////////////
 
 // #include "private.h"
-// #include "sm.h"
-#include "config.h"
+#include "sm.h"
+// #include "config.h"
 #include "mqtt.h"
 #include "variables.h"
 

@@ -50,7 +50,7 @@ void setup_MCP()
 //////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////
 
-void update_pins(uint8_t pin, uint8_t value)
+void update_pins(uint8_t pin, uint8_t value, bool show_val = false)
 {
     if (pin == 0 || pin > 16)
         return;
@@ -59,8 +59,12 @@ void update_pins(uint8_t pin, uint8_t value)
 
     uint8_t val = 0;
 
-    if (value > 1)
+    if (value > 1 && !show_val)
         val = !bitRead(pins, pos);
+
+    if (value > 1 && show_val)
+        if (!invert_output)
+            val = 1;
 
     if (invert_output)
     {
@@ -77,7 +81,7 @@ void update_pins(uint8_t pin, uint8_t value)
 
     update_MCP();
 
-    client.publish(MQTT_CHAN_TOPIC + String(pin), String(invert_output ? !val : val), true, 0);
+    client.publish(MQTT_CHAN_TOPIC + String(pin), String(show_val ? value : invert_output ? !val : val), true, 0);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
